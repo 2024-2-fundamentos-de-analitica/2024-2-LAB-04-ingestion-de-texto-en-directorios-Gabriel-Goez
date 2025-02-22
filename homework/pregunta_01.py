@@ -68,6 +68,37 @@ def pregunta_01():
     |  3 | Both operating profit and net sales for the three-month period increased , respectively from EUR16 .0 m and EUR139m , as compared to the corresponding quarter in 2006 | positive |
     |  4 | Tampere Science Parks is a Finnish company that owns , leases and builds office properties and it specialises in facilities for technology-oriented businesses         | neutral  |
     ```
-
+    
 
     """
+    import os
+    import shutil
+    import glob
+    import pandas as pd
+
+    # Restablecer el estado del directorio files antes de ejecutar
+    if os.path.exists('./files/output'):
+        shutil.rmtree('./files/output')
+
+    # estructuras de los archivos de salida
+    columns = ['phrase', 'target']
+    output = {
+        'train': pd.DataFrame(columns=columns),
+        'test': pd.DataFrame(columns=columns)
+    }
+    
+    # Recorrer y leer archivos de entrada
+    for pathname in glob.glob('./files/input/*/*/*.txt'):
+        pathname = pathname.replace('\\', '/')
+        print(pathname)
+        with open(pathname) as file:
+            phrase = file.read()
+            split, target = os.path.dirname(pathname).split('/')[-2:]
+            values = pd.DataFrame([[phrase, target]], columns=columns)
+            output[split] = pd.concat([output[split], values], ignore_index=True)
+
+    # Generar archivos de salida
+    os.makedirs('./files/output/')
+    for split in output:
+        output[split].to_csv(f'./files/output/{split}_dataset.csv')
+pregunta_01()
