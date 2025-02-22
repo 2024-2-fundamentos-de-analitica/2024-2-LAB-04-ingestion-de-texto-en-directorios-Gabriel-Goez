@@ -71,34 +71,31 @@ def pregunta_01():
     
 
     """
+    import zipfile
     import os
-    import shutil
-    import glob
     import pandas as pd
-
-    # Restablecer el estado del directorio files antes de ejecutar
-    if os.path.exists('./files/output'):
-        shutil.rmtree('./files/output')
-
-    # estructuras de los archivos de salida
-    columns = ['phrase', 'target']
-    output = {
-        'train': pd.DataFrame(columns=columns),
-        'test': pd.DataFrame(columns=columns)
-    }
     
-    # Recorrer y leer archivos de entrada
-    for pathname in glob.glob('./files/input/*/*/*.txt'):
-        pathname = pathname.replace('\\', '/')
-        print(pathname)
-        with open(pathname) as file:
-            phrase = file.read()
-            split, target = os.path.dirname(pathname).split('/')[-2:]
-            values = pd.DataFrame([[phrase, target]], columns=columns)
-            output[split] = pd.concat([output[split], values], ignore_index=True)
+    with zipfile.ZipFile("files/input.zip", "r") as zip_ref:
+        zip_ref.extractall("files")
 
-    # Generar archivos de salida
-    os.makedirs('./files/output/')
-    for split in output:
-        output[split].to_csv(f'./files/output/{split}_dataset.csv')
+    test = []
+    for folder in ["test"]:
+        for sentiment in ["negative", "positive", "neutral"]:
+            for file in os.listdir(f"files/input/{folder}/{sentiment}"):
+                with open(f"files/input/{folder}/{sentiment}/{file}", "r") as f:
+                    test.append({"phrase": f.read(), "target": sentiment})
+
+    train = []
+    for folder in ["train"]:
+        for sentiment in ["negative", "positive", "neutral"]:
+            for file in os.listdir(f"files/input/{folder}/{sentiment}"):
+                with open(f"files/input/{folder}/{sentiment}/{file}", "r") as f:
+                    train.append({"phrase": f.read(), "target": sentiment})
+
+    df_test = pd.DataFrame(test)
+    df_train = pd.DataFrame(train)
+
+    os.makedirs("files/output", exist_ok=True)
+    df_train.to_csv("files/output/train_dataset.csv", index=False)
+    df_test.to_csv("files/output/test_dataset.csv", index=False)
 pregunta_01()
